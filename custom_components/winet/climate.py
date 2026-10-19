@@ -1,0 +1,70 @@
+"""Native thermostat entity. The stove retains control of combustion."""
+
+from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACMode
+from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
+from homeassistant.exceptions import ServiceValidationError
+
+from .const import CONF_AIR_DIVISOR
+from .entity import WinetEntity
+
+
+async def async_setup_entry(hass, entry, async_add_entities):
+    async_add_entities([WinetClimate(entry.runtime_data)])
+
+
+class WinetClimate(WinetEntity, ClimateEntity):
+    _attr_name = None
+    _attr_icon = "mdi:fire"
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_min_temp = 5
+    _attr_max_temp = 40
+    _attr_target_temperature_step = 0.5
+    _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT]
+    _attr_supported_features = (
+        ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
+    )
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator, "climate")
+
+    @property
+    def current_temperature(self):
+        value = self.coordinator.data.air
+        return None if value is None else value / self.coordinator.settings[CONF_AIR_DIVISOR]
+
+    @property
+    def target_temperature(self):
+        value = self.coordinator.data.set_air
+        return None if value is None else value / self.coordinator.settings[CONF_AIR_DIVISOR]
+
+    @property
+    def hvac_mode(self):
+        status = self.coordinator.data.status
+        if status == 1:
+            return HVACMode.HEAT
+        if status in (0, 2):
+            return HVACMode.OFF
+        return None
+
+    # hvac_action intentionally unset: status=1 does not distinguish ignition,
+    # modulation, standby or established combustion across stove firmwares.
+
+    async def async_set_temperature(self, **kwargs):
+        if kwargs.get("hvac_mode") not in (None, self.hvac_mode):
+            raise ServiceValidationError("Set HVAC mode in a separate action")
+        if ATTR_TEMPERATURE not in kwargs:
+            raise ServiceValidationError("Temperature is required")
+        await self.coordinator.async_command("temperature/air", kwargs[ATTR_TEMPERATURE])
+
+    async def async_set_hvac_mode(self, hvac_mode):
+        if hvac_mode not in self.hvac_modes:
+            raise ServiceValidationError("Unsupported HVAC mode")
+        await self.coordinator.async_command("status", 1 if hvac_mode == HVACMode.HEAT else 0)
+
+    async def async_turn_on(self):
+        await self.async_set_hvac_mode(HVACMode.HEAT)
+
+    async def async_turn_off(self):
+        await self.async_set_hvac_mode(HVACMode.OFF)

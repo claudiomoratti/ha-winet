@@ -1,0 +1,92 @@
+{
+  "title": "WiNet Local",
+  "config": {
+    "step": {
+      "user": {
+        "title": "WiNet Local",
+        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Non-OFF state mappings still require hardware validation.",
+        "data": {
+          "host": "IP address or hostname",
+          "air_divisor": "Air temperature divisor (1 = \u00b0C, 2 = half-degrees)",
+          "max_power": "Maximum power level",
+          "hydro": "Hydro stove",
+          "read_only": "Read only (blocks all commands)",
+          "poll_interval": "Polling interval (seconds)"
+        }
+      },
+      "reconfigure": {
+        "data": {
+          "host": "IP address or hostname"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "Enter a hostname or IP without http:// or paths.",
+      "unsupported_device": "This is not a supported WiNet Stove module.",
+      "cannot_connect": "Cannot read the WiNet API.",
+      "wrong_device": "This address belongs to a different WiNet device."
+    },
+    "abort": {
+      "already_configured": "Device already configured",
+      "reconfigure_successful": "Address updated"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "WiNet Local",
+        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Non-OFF state mappings still require hardware validation.",
+        "data": {
+          "air_divisor": "Air temperature divisor (1 = \u00b0C, 2 = half-degrees)",
+          "max_power": "Maximum power level",
+          "hydro": "Hydro stove",
+          "read_only": "Read only (blocks all commands)",
+          "poll_interval": "Polling interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "number": {
+      "power": {
+        "name": "Power level"
+      },
+      "set_water": {
+        "name": "Water target temperature"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "off": "Off",
+          "on": "On",
+          "final_cleaning": "Final cleaning",
+          "alarm": "Alarm",
+          "unmanaged": "Unmanaged",
+          "unrecognized": "Unrecognized"
+        }
+      },
+      "description": {
+        "name": "Status description"
+      },
+      "air": {
+        "name": "Air temperature"
+      },
+      "gasflue": {
+        "name": "Flue temperature"
+      },
+      "rpm_extractor": {
+        "name": "Flue extractor"
+      },
+      "water": {
+        "name": "Water temperature"
+      }
+    },
+    "binary_sensor": {
+      "alarm": {
+        "name": "Alarm"
+      }
+    }
+  }
+}

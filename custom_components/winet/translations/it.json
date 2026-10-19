@@ -1,0 +1,92 @@
+{
+  "title": "WiNet Local",
+  "config": {
+    "step": {
+      "user": {
+        "title": "WiNet Local",
+        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Il supporto degli stati diversi da OFF è ancora da verificare su hardware.",
+        "data": {
+          "host": "Indirizzo IP o hostname",
+          "air_divisor": "Divisore temperatura aria (1 = °C, 2 = mezzi gradi)",
+          "max_power": "Potenza massima",
+          "hydro": "Stufa idro",
+          "read_only": "Sola lettura (blocca tutti i comandi)",
+          "poll_interval": "Intervallo aggiornamento (secondi)"
+        }
+      },
+      "reconfigure": {
+        "data": {
+          "host": "Indirizzo IP o hostname"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "Inserisci un hostname o IP, senza http:// o percorsi.",
+      "unsupported_device": "Il dispositivo non è un modulo WiNet Stove supportato.",
+      "cannot_connect": "Impossibile leggere le API WiNet.",
+      "wrong_device": "Questo indirizzo appartiene a un altro dispositivo WiNet."
+    },
+    "abort": {
+      "already_configured": "Dispositivo già configurato",
+      "reconfigure_successful": "Indirizzo aggiornato"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "WiNet Local",
+        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Il supporto degli stati diversi da OFF è ancora da verificare su hardware.",
+        "data": {
+          "air_divisor": "Divisore temperatura aria (1 = °C, 2 = mezzi gradi)",
+          "max_power": "Potenza massima",
+          "hydro": "Stufa idro",
+          "read_only": "Sola lettura (blocca tutti i comandi)",
+          "poll_interval": "Intervallo aggiornamento (secondi)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "number": {
+      "power": {
+        "name": "Potenza"
+      },
+      "set_water": {
+        "name": "Temperatura acqua impostata"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Stato",
+        "state": {
+          "off": "Spenta",
+          "on": "Accesa",
+          "final_cleaning": "Pulizia finale",
+          "alarm": "Allarme",
+          "unmanaged": "Non gestita",
+          "unrecognized": "Non riconosciuto"
+        }
+      },
+      "description": {
+        "name": "Descrizione stato"
+      },
+      "air": {
+        "name": "Temperatura aria"
+      },
+      "gasflue": {
+        "name": "Temperatura fumi"
+      },
+      "rpm_extractor": {
+        "name": "Estrattore fumi"
+      },
+      "water": {
+        "name": "Temperatura acqua"
+      }
+    },
+    "binary_sensor": {
+      "alarm": {
+        "name": "Allarme"
+      }
+    }
+  }
+}
