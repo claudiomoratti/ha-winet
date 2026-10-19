@@ -18,7 +18,7 @@ Nessuna dashboard o integrazione frontend aggiuntiva è necessaria.
 
 ## Installazione con HACS
 
-Quando questo repository sarà pubblicato:
+Repository: **https://github.com/claudiomoratti/ha-winet**
 
 1. HACS → menu → **Repository personalizzati**.
 2. Aggiungere l'URL di questo repository, categoria **Integrazione**.
@@ -136,8 +136,9 @@ pytest --cov=custom_components.winet
 ```
 
 I test usano le fixture Home Assistant e HTTP simulato, con socket esterni disabilitati.
-La CI comprende test, Ruff, hassfest e validazione HACS. I workflow remoti devono
-essere eseguiti dopo la pubblicazione; non sono sostituiti dai test locali.
+La CI comprende test, Ruff, hassfest e validazione HACS.
+Vedere [risultati della validazione locale](docs/validation.md); i workflow remoti
+sono verifiche aggiuntive eseguite sul repository pubblicato.
 
 ## Riferimenti
 
