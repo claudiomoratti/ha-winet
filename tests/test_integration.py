@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import entity_registry as er
+from pytest_homeassistant_custom_component.common import async_fire_time_changed
 
 from custom_components.winet.api import StoveState, WinetError
 from custom_components.winet.diagnostics import async_get_config_entry_diagnostics
@@ -88,7 +89,7 @@ async def test_power_presets_follow_config_and_device(hass, entry, api_mock, max
 
 @pytest.mark.parametrize("max_power,level", [(5, 1), (5, 5), (9, 9)])
 async def test_set_power_preset_and_number_stay_synchronized(
-    hass, entry, api_mock, max_power, level
+    hass, entry, api_mock, freezer, max_power, level
 ):
     hass.config_entries.async_update_entry(
         entry, options=entry.options | {"read_only": False, "max_power": max_power}
@@ -128,6 +129,10 @@ async def test_set_power_preset_and_number_stay_synchronized(
             blocking=True,
         )
         command.assert_awaited_once_with("power", 5)
+        # The coordinator coalesces refresh requests made within ten seconds.
+        freezer.tick(11)
+        async_fire_time_changed(hass)
+        await hass.async_block_till_done()
     assert hass.states.get(climate_id).attributes["preset_mode"] == "power_5"
 
 
