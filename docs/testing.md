@@ -41,6 +41,18 @@ ha installato l'integrazione in Home Assistant e non ha inviato comandi alla stu
 - Per tornare indietro disabilitare WiNet Local e ripristinare il pacchetto salvato;
   evitare due sistemi che comandano automaticamente la stufa contemporaneamente.
 
+## Ventole P937 (0.2.0)
+
+- Verificare che il profilo 27436 sia già attivo nel modulo e attivare l'opzione
+  **Due ventole Piazzetta P937** nell'integrazione, inizialmente in sola lettura.
+- Confrontare entrambe le velocità 1–4 con il telecomando, una modifica alla volta.
+- Aggiungere `climate-fan-modes` alla scheda termostato e verificare la coppia mostrata.
+- Dopo aver abilitato i comandi, provare prima i due number separatamente e poi una
+  coppia dal termostato; confermare sul telecomando anche la scrittura della prima.
+- Verificare che number e climate si aggiornino insieme e che potenza, setpoint e
+  stato non vengano modificati dalle azioni sulle ventole.
+- Reload e riavvio devono conservare le entità senza scritture o cambi di profilo.
+
 ## Esito
 
 Registrare versione dell'integrazione, HA e firmware, opzioni, fase e risultati attesi/osservati.

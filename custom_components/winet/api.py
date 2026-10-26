@@ -6,11 +6,14 @@ import asyncio
 import ipaddress
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
+from urllib.parse import urlencode
 
 import aiohttp
 from yarl import URL
+
+from .const import DUAL_FAN_PROFILE
 
 
 class WinetError(Exception):
@@ -63,6 +66,35 @@ class StoveState:
     power: float | None
     gasflue: float | None
     rpm_extractor: float | None
+    fan_profile: int | None = None
+    fan_1: int | None = None
+    fan_2: int | None = None
+
+    def with_fans(self, data: dict[str, Any]) -> StoveState:
+        """Accept only the P937 profile and unambiguous levels 1–4."""
+        profile = data.get("custom")
+        if type(profile) is not int or profile != DUAL_FAN_PROFILE:
+            return self
+        params = data.get("params")
+        if not isinstance(params, list):
+            return replace(self, fan_profile=profile)
+        levels = {}
+        duplicates = set()
+        for item in params:
+            if not isinstance(item, list) or len(item) != 2:
+                continue
+            register, value = item
+            if type(register) is not int or register not in (47, 48):
+                continue
+            if register in levels:
+                duplicates.add(register)
+            levels[register] = value if type(value) is int and 1 <= value <= 4 else None
+        return replace(
+            self,
+            fan_profile=profile,
+            fan_1=None if 47 in duplicates else levels.get(47),
+            fan_2=None if 48 in duplicates else levels.get(48),
+        )
 
     @classmethod
     def parse(cls, data: dict[str, Any]) -> StoveState:
@@ -88,15 +120,35 @@ class StoveState:
 class WinetClient:
     """HTTP API; GET paths with a value are writes, despite the HTTP method."""
 
-    def __init__(self, session: aiohttp.ClientSession, host: str) -> None:
+    def __init__(self, session: aiohttp.ClientSession, host: str, *, dual_fan=False) -> None:
         self.session = session
         self.host = normalize_host(host)
+        self.dual_fan = dual_fan
 
     async def _get(self, path: str) -> dict[str, Any]:
         try:
             async with asyncio.timeout(10):
                 async with self.session.get(
                     f"http://{self.host}/api/{path}", allow_redirects=False
+                ) as response:
+                    if response.status != 200:
+                        raise WinetError(f"WiNet HTTP error {response.status}")
+                    data = await response.json(content_type=None)
+        except (aiohttp.ClientError, TimeoutError, ValueError) as err:
+            raise WinetError("Cannot read a valid response from WiNet") from err
+        if not isinstance(data, dict):
+            raise WinetError("WiNet response is not an object")
+        return data
+
+    async def _post(self, path: str, fields: dict[str, Any]) -> dict[str, Any]:
+        """Match the web panel: form-encoded body with its JSON content type."""
+        try:
+            async with asyncio.timeout(10):
+                async with self.session.post(
+                    f"http://{self.host}/ajax/{path}",
+                    data=urlencode(fields),
+                    headers={"Content-Type": "application/json; charset=utf-8"},
+                    allow_redirects=False,
                 ) as response:
                     if response.status != 200:
                         raise WinetError(f"WiNet HTTP error {response.status}")
@@ -125,7 +177,27 @@ class WinetClient:
         return {"model": model[:100], "mac": mac}
 
     async def read(self) -> StoveState:
-        return StoveState.parse(await self._get("global"))
+        state = StoveState.parse(await self._get("global"))
+        if not self.dual_fan:
+            return state
+        try:
+            registers = await self._post("get-registers", {"key": "020", "category": 0})
+        except WinetError:
+            # An auxiliary endpoint failure must not hide the main thermostat.
+            return state
+        return state.with_fans(registers)
+
+    async def command_fan(self, fan: int, speed: int) -> None:
+        """Write only the two verified logical registers; never change profiles."""
+        if not self.dual_fan or type(fan) is not int or fan not in (1, 2):
+            raise ValueError("Unsupported fan")
+        if type(speed) is not int or not 1 <= speed <= 4:
+            raise ValueError("Fan speed must be an integer from 1 to 4")
+        result = await self._post(
+            "set-register", {"key": "002", "memory": 1, "regId": 46 + fan, "value": speed}
+        )
+        if result.get("result") is not True:
+            raise WinetError("WiNet rejected the fan command")
 
     async def command(self, path: str, value: float | int) -> None:
         if path not in {"status", "power", "temperature/air", "temperature/water"}:

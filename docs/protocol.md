@@ -9,7 +9,8 @@ La pagina API di StufaSmart documenta letture `/api/id`, `/api/global`, `/api/st
 `/api/temperature/air`, `/api/temperature/water`, `/api/power`. Le scritture sono GET
 con un valore aggiunto al percorso. Non eseguire crawler o prefetch su questi URL.
 
-L'integrazione usa soltanto `/id` al setup e `/global` per il polling. Non conserva
+L'integrazione usa `/id` al setup e `/global` per il polling; con l'opzione ventole
+P937 attiva aggiunge la lettura AJAX descritta sotto. Non conserva
 la risposta completa di `/id`, che contiene anche una password AP.
 
 I campi riconosciuti sono status, description, air, setAir, water, setWater,
@@ -20,6 +21,46 @@ Il campione reale iniziale, letto senza comandi, aveva `status=0`, descrizione O
 aria e setpoint coerenti con la codifica in mezzi gradi, acqua e RPM nulli. Questa
 osservazione non certifica il funzionamento in combustione o le scritture.
 Non si includono qui indirizzi, MAC, SSID o risposte identificative private.
+
+## Piazzetta P937: ventole, verifica del 26 ottobre 2026
+
+Firmware WiNet 0.79, profilo `custom=27436`, due velocità indipendenti 1–4.
+Dal pannello `management.js` sono stati ricostruiti:
+
+- Lettura: POST `/ajax/get-registers`, corpo `key=020&category=0`.
+  La risposta comprende `custom` e `params`, con coppie `[47, velocità_1]` e
+  `[48, velocità_2]`.
+- Scrittura: POST `/ajax/set-register`, corpo
+  `key=002&memory=1&regId=47&value=3` per la prima ventola;
+  `regId=48` per la seconda. Gli identificativi sono logici, non indirizzi di
+  memoria fisica documentati della centralina.
+- Il pannello invia il corpo con codifica form e intestazione
+  `Content-Type: application/json; charset=utf-8`: il client riproduce questo formato.
+
+Il profilo 27436 ha restituito valori coerenti con il telecomando; modifiche della
+prima ventola da telecomando sono state osservate in lettura. Un comando HTTP alla
+seconda ventola da 4 a 2 è stato accettato, riletto e confermato sul telecomando.
+La scrittura della prima usa lo stesso meccanismo ma resta da verificare fisicamente.
+Questi riscontri non certificano ogni firmware, livello o fase della stufa.
+
+Il profilo 27437 leggeva diversamente la seconda ventola; il 27419 restituiva anche
+setpoint e potenza incoerenti. Nessuno dei due è supportato. I parametri 47/48 hanno
+semantiche differenti per altri profili, quindi non vanno comandati senza verifica.
+
+La lettura generica con `custom=65535` non includeva 47/48. Le categorie 0–4
+restituivano gli stessi parametri; 5–8 venivano riportate come 2. Aggiungere
+`memory` e `regId` a `key=020` non ha selezionato il singolo parametro.
+
+L'integrazione non invia `key=026` né modifica `custom`, `isOld` o `isForcedOld`.
+Durante l'indagine il ripristino del profilo generico richiedeva `customCode=0`;
+`65535` era ignorato. Dopo il ripristino `isOld` risultava false, senza perdita
+delle letture principali. Il significato preciso dei flag non è documentato.
+
+Con l'opzione P937 attiva si leggono i registri a ogni polling. Un errore di questo
+endpoint lascia disponibili i dati principali ma non le velocità; prima di ogni
+scrittura vengono comunque rilette velocità e profilo. I comandi delle due ventole
+sono serializzati con il polling e seguiti da riscontro immediato. Una coppia non
+è atomica: in caso di errore parziale viene letto lo stato reale senza retry.
 
 ## Blower Cube: dispositivo distinto
 

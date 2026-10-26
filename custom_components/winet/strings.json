@@ -4,14 +4,15 @@
     "step": {
       "user": {
         "title": "WiNet Local",
-        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Non-OFF state mappings still require hardware validation.",
+        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Non-OFF state mappings still require hardware validation. Fans require profile 27436 already active on the module; the integration does not change it.",
         "data": {
           "host": "IP address or hostname",
-          "air_divisor": "Air temperature divisor (1 = \u00b0C, 2 = half-degrees)",
+          "air_divisor": "Air temperature divisor (1 = °C, 2 = half-degrees)",
           "max_power": "Maximum power level",
           "hydro": "Hydro stove",
           "read_only": "Read only (blocks all commands)",
-          "poll_interval": "Polling interval (seconds)"
+          "poll_interval": "Polling interval (seconds)",
+          "dual_fan": "Piazzetta P937 dual fans (WiNet profile 27436)"
         }
       },
       "reconfigure": {
@@ -35,13 +36,14 @@
     "step": {
       "init": {
         "title": "WiNet Local",
-        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Non-OFF state mappings still require hardware validation.",
+        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Non-OFF state mappings still require hardware validation. Fans require profile 27436 already active on the module; the integration does not change it.",
         "data": {
-          "air_divisor": "Air temperature divisor (1 = \u00b0C, 2 = half-degrees)",
+          "air_divisor": "Air temperature divisor (1 = °C, 2 = half-degrees)",
           "max_power": "Maximum power level",
           "hydro": "Hydro stove",
           "read_only": "Read only (blocks all commands)",
-          "poll_interval": "Polling interval (seconds)"
+          "poll_interval": "Polling interval (seconds)",
+          "dual_fan": "Piazzetta P937 dual fans (WiNet profile 27436)"
         }
       }
     }
@@ -53,6 +55,12 @@
       },
       "set_water": {
         "name": "Water target temperature"
+      },
+      "fan_1": {
+        "name": "Fan 1"
+      },
+      "fan_2": {
+        "name": "Fan 2"
       }
     },
     "sensor": {
@@ -102,6 +110,26 @@
               "power_7": "Power 7",
               "power_8": "Power 8",
               "power_9": "Power 9"
+            }
+          },
+          "fan_mode": {
+            "state": {
+              "fans_1_1": "Fan 1: 1 · Fan 2: 1",
+              "fans_1_2": "Fan 1: 1 · Fan 2: 2",
+              "fans_1_3": "Fan 1: 1 · Fan 2: 3",
+              "fans_1_4": "Fan 1: 1 · Fan 2: 4",
+              "fans_2_1": "Fan 1: 2 · Fan 2: 1",
+              "fans_2_2": "Fan 1: 2 · Fan 2: 2",
+              "fans_2_3": "Fan 1: 2 · Fan 2: 3",
+              "fans_2_4": "Fan 1: 2 · Fan 2: 4",
+              "fans_3_1": "Fan 1: 3 · Fan 2: 1",
+              "fans_3_2": "Fan 1: 3 · Fan 2: 2",
+              "fans_3_3": "Fan 1: 3 · Fan 2: 3",
+              "fans_3_4": "Fan 1: 3 · Fan 2: 4",
+              "fans_4_1": "Fan 1: 4 · Fan 2: 1",
+              "fans_4_2": "Fan 1: 4 · Fan 2: 2",
+              "fans_4_3": "Fan 1: 4 · Fan 2: 3",
+              "fans_4_4": "Fan 1: 4 · Fan 2: 4"
             }
           }
         }

@@ -1,8 +1,9 @@
 # WiNet Local for Home Assistant
 
 Integrazione custom per le **API locali WiNet Stove**, preparata per HACS.
-Versione **0.1.1**, sperimentale: test software su Home Assistant **2026.10.1**;
-collaudo dei comandi su stufa reale ancora da effettuare.
+Versione **0.2.0**, sperimentale: test software su Home Assistant **2026.10.1**.
+Ventole collaudate su Piazzetta P937 con WiNet 0.79 e profilo 27436;
+setpoint, potenza, accensione e spegnimento richiedono ancora un collaudo completo.
 
 ## Entità native
 
@@ -12,6 +13,8 @@ collaudo dei comandi su stufa reale ancora da effettuare.
 - **Sensor**: stato, descrizione originale, temperatura aria, fumi, giri estrattore.
 - **Binary sensor**: allarme secondo la mappa stati convenzionale WiNet.
 - **Idro opzionale**: temperatura acqua e setpoint acqua 40–80 °C.
+- **Due ventole P937 opzionali**: velocità indipendenti 1–4 e selettore della coppia
+  di velocità direttamente nel termostato.
 
 Un unico dispositivo, identificato dal MAC, raggruppa tutte le entità. Più moduli
 possono essere aggiunti senza collisioni. Interfaccia e opzioni in italiano e inglese.
@@ -39,6 +42,39 @@ Selezionare una potenza modifica soltanto quel valore: non accende la stufa e no
 cambia la temperatura impostata. Le azioni standard usano `climate.set_preset_mode`
 con `preset_mode: power_1` … `power_5` (o `power_9` se configurato).
 
+### Due ventole nella scheda termostato
+
+Per la **Piazzetta P937**, attivare **Due ventole Piazzetta P937 (profilo WiNet 27436)**
+nelle opzioni dell'integrazione. Il modulo deve avere già attivo il profilo **27436**:
+l'integrazione lo verifica a ogni comando, ma non lo imposta né cambia il protocollo.
+Il supporto è disattivato per impostazione predefinita sulle installazioni esistenti.
+
+Il termostato offre un solo selettore nativo di ventilazione: mostra le 16 coppie
+**V1: 1 · V2: 1** … **V1: 4 · V2: 4**. Aggiungere la funzione **Modalità ventola
+climatizzatore** alla scheda, oppure usare:
+
+```yaml
+type: thermostat
+entity: climate.nome_della_stufa
+features:
+  - type: climate-hvac-modes
+  - type: climate-preset-modes
+    style: dropdown
+  - type: climate-fan-modes
+    style: dropdown
+```
+
+L'azione `climate.set_fan_mode` accetta `fan_mode: fans_3_2`, per esempio, per impostare
+ventola 1 a 3 e ventola 2 a 2. Due entità **number**, **Ventola 1** e **Ventola 2**,
+permettono anche regolazioni separate da 1 a 4 con `number.set_value`.
+Non sono previste velocità 0, spegnimento delle ventole o modalità automatica.
+
+Tutti i controlli leggono gli stessi dati, recepiscono le modifiche dal telecomando
+e rispettano **Sola lettura**. Un comando modifica solo le velocità richieste che
+risultano diverse, poi le rilegge immediatamente. Una coppia richiede fino a due
+scritture: se la seconda fallisce, la prima può essere già applicata; viene segnalato
+l'errore e letto lo stato reale, senza ripetere i comandi.
+
 ## Installazione con HACS
 
 Repository: **https://github.com/claudiomoratti/ha-winet**
@@ -64,8 +100,9 @@ e riavviare Home Assistant. Non copiare `tests`, `docs` o file di sviluppo in `/
 | Divisore aria | 2 | `2`: API in mezzi gradi; `1`: API in °C |
 | Potenza massima | 5 | Selezionare 9 solo per modelli compatibili |
 | Idro | no | Crea sensore e setpoint acqua |
+| Due ventole P937 | no | Controlli 1–4 per entrambe le ventole, solo con profilo 27436 |
 | Sola lettura | sì | Blocca tutte le scritture, incluse le azioni HA |
-| Intervallo | 15 s | Un'unica richiesta `/api/global`, configurabile 10–300 s |
+| Intervallo | 15 s | Polling condiviso, configurabile 10–300 s; con ventole attive aggiunge una lettura dei registri |
 
 Le opzioni sono modificabili dall'integrazione; vengono applicate con un reload.
 **Riconfigura** cambia l'indirizzo verificando che il MAC corrisponda allo stesso dispositivo.
@@ -90,6 +127,8 @@ scrittura danno un errore esplicito finché questa opzione è attiva.
 - Timeout, HTTP non validi e risposte malformate rendono il dispositivo indisponibile.
 - Valori `null` rimangono sconosciuti, senza convertirli in zero. I fumi a 0 °C sono
   conservati così come riportati: non costituiscono una misura validata del sensore.
+- Un errore del solo endpoint delle ventole rende sconosciuta la coppia e indisponibili
+  i controlli number interessati; il termostato mantiene le letture principali.
 - I comandi sono serializzati, non vengono ritentati automaticamente e sono seguiti
   da una lettura. `result=true` significa accettazione, non completamento del ciclo.
 - Un timeout di scrittura ha esito incerto: verificare lo stato prima di riprovare.
@@ -126,10 +165,10 @@ il collaudo e considerando i tempi previsti dal produttore.
 ## Ventole e Blower Cube
 
 Nel repository di riferimento le API `/api/fan/...` appartengono al **WiNet Blower Cube**,
-configurato con un proprio host. Non sono una prova che il modulo **WiNET Gen.Stove**
-esponga il controllo delle ventole della stufa. Questa versione supporta solo Stove:
-non crea entità `fan`, non prova endpoint di scrittura e non scambia i giri
-estrattore fumi per una velocità regolabile. Vedere [analisi del protocollo](docs/protocol.md).
+configurato con un proprio host. Il supporto P937 usa invece l'interfaccia AJAX del
+**WiNET Gen.Stove**, con profilo 27436 e parametri logici 47/48. Non usa le API
+Blower Cube e non scambia i giri dell'estrattore fumi per una velocità regolabile.
+Vedere [analisi del protocollo](docs/protocol.md).
 
 ## Primo collaudo e migrazione
 

@@ -4,14 +4,15 @@
     "step": {
       "user": {
         "title": "WiNet Local",
-        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Il supporto degli stati diversi da OFF è ancora da verificare su hardware.",
+        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Il supporto degli stati diversi da OFF è ancora da verificare su hardware. Le ventole richiedono il profilo 27436 già attivo sul modulo; l’integrazione non lo modifica.",
         "data": {
           "host": "Indirizzo IP o hostname",
           "air_divisor": "Divisore temperatura aria (1 = °C, 2 = mezzi gradi)",
           "max_power": "Potenza massima",
           "hydro": "Stufa idro",
           "read_only": "Sola lettura (blocca tutti i comandi)",
-          "poll_interval": "Intervallo aggiornamento (secondi)"
+          "poll_interval": "Intervallo aggiornamento (secondi)",
+          "dual_fan": "Due ventole Piazzetta P937 (profilo WiNet 27436)"
         }
       },
       "reconfigure": {
@@ -35,13 +36,14 @@
     "step": {
       "init": {
         "title": "WiNet Local",
-        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Il supporto degli stati diversi da OFF è ancora da verificare su hardware.",
+        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Il supporto degli stati diversi da OFF è ancora da verificare su hardware. Le ventole richiedono il profilo 27436 già attivo sul modulo; l’integrazione non lo modifica.",
         "data": {
           "air_divisor": "Divisore temperatura aria (1 = °C, 2 = mezzi gradi)",
           "max_power": "Potenza massima",
           "hydro": "Stufa idro",
           "read_only": "Sola lettura (blocca tutti i comandi)",
-          "poll_interval": "Intervallo aggiornamento (secondi)"
+          "poll_interval": "Intervallo aggiornamento (secondi)",
+          "dual_fan": "Due ventole Piazzetta P937 (profilo WiNet 27436)"
         }
       }
     }
@@ -53,6 +55,12 @@
       },
       "set_water": {
         "name": "Temperatura acqua impostata"
+      },
+      "fan_1": {
+        "name": "Ventola 1"
+      },
+      "fan_2": {
+        "name": "Ventola 2"
       }
     },
     "sensor": {
@@ -102,6 +110,26 @@
               "power_7": "Potenza 7",
               "power_8": "Potenza 8",
               "power_9": "Potenza 9"
+            }
+          },
+          "fan_mode": {
+            "state": {
+              "fans_1_1": "V1: 1 · V2: 1",
+              "fans_1_2": "V1: 1 · V2: 2",
+              "fans_1_3": "V1: 1 · V2: 3",
+              "fans_1_4": "V1: 1 · V2: 4",
+              "fans_2_1": "V1: 2 · V2: 1",
+              "fans_2_2": "V1: 2 · V2: 2",
+              "fans_2_3": "V1: 2 · V2: 3",
+              "fans_2_4": "V1: 2 · V2: 4",
+              "fans_3_1": "V1: 3 · V2: 1",
+              "fans_3_2": "V1: 3 · V2: 2",
+              "fans_3_3": "V1: 3 · V2: 3",
+              "fans_3_4": "V1: 3 · V2: 4",
+              "fans_4_1": "V1: 4 · V2: 1",
+              "fans_4_2": "V1: 4 · V2: 2",
+              "fans_4_3": "V1: 4 · V2: 3",
+              "fans_4_4": "V1: 4 · V2: 4"
             }
           }
         }

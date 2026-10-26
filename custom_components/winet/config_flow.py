@@ -11,6 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import InvalidDevice, WinetClient, WinetError, normalize_host
 from .const import (
     CONF_AIR_DIVISOR,
+    CONF_DUAL_FAN,
     CONF_HYDRO,
     CONF_INTERVAL,
     CONF_MAX_POWER,
@@ -27,6 +28,7 @@ def settings_schema(current):
             vol.Required(CONF_AIR_DIVISOR, default=values[CONF_AIR_DIVISOR]): vol.In([1, 2]),
             vol.Required(CONF_MAX_POWER, default=values[CONF_MAX_POWER]): vol.In([5, 9]),
             vol.Required(CONF_HYDRO, default=values[CONF_HYDRO]): bool,
+            vol.Required(CONF_DUAL_FAN, default=values[CONF_DUAL_FAN]): bool,
             vol.Required(CONF_READ_ONLY, default=values[CONF_READ_ONLY]): bool,
             vol.Required(CONF_INTERVAL, default=values[CONF_INTERVAL]): vol.All(
                 vol.Coerce(int), vol.Range(min=10, max=300)
