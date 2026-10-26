@@ -1,4 +1,27 @@
-# Verifica software 0.1.0
+# Verifica software
+
+## 0.2.0 — 26 ottobre 2026
+
+Python 3.14.2, Home Assistant 2026.10.1.
+
+| Controllo | Esito |
+| --- | --- |
+| pytest con fixture HA e socket esterni bloccati | 104 test superati |
+| Copertura statement | 94% (528 statement, 32 non coperti) |
+| Ruff lint e format | superati |
+| Nuovo client contro il modulo reale, sola lettura | profilo 27436 e due velocità ricevuti |
+
+Le nuove verifiche coprono il corpo HTTP reale delle richieste AJAX, il controllo
+del profilo a ogni comando, valori mancanti o ambigui, sincronizzazione tra number
+e climate, coppie di velocità, lettura immediata dopo comandi consecutivi, sola
+lettura, errori parziali, timeout senza retry e traduzioni italiane del termostato.
+
+Il collaudo hardware del protocollo è descritto in [protocol.md](protocol.md).
+La scrittura della prima ventola e tutte le combinazioni nelle varie fasi della
+stufa non sono ancora state certificate su hardware. Questa verifica non installa
+l'integrazione sull'istanza HA dell'utente.
+
+## 0.1.0
 
 Eseguita il 19 ottobre 2026 su Python 3.14.8 e Home Assistant 2026.10.1.
 

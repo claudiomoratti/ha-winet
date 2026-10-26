@@ -7,13 +7,17 @@ from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import InvalidDevice, WinetClient, WinetError
-from .const import PLATFORMS
+from .const import CONF_DUAL_FAN, PLATFORMS
 from .coordinator import WinetCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Connect without writing any device settings."""
-    client = WinetClient(async_get_clientsession(hass), entry.data[CONF_HOST])
+    client = WinetClient(
+        async_get_clientsession(hass),
+        entry.data[CONF_HOST],
+        dual_fan=entry.options.get(CONF_DUAL_FAN, False),
+    )
     try:
         identity = await client.identify()
     except InvalidDevice as err:

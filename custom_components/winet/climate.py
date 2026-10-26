@@ -4,7 +4,7 @@ from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.exceptions import ServiceValidationError
 
-from .const import CONF_AIR_DIVISOR, CONF_MAX_POWER
+from .const import CONF_AIR_DIVISOR, CONF_DUAL_FAN, CONF_MAX_POWER
 from .entity import WinetEntity
 
 
@@ -34,6 +34,28 @@ class WinetClimate(WinetEntity, ClimateEntity):
             f"power_{level}": level for level in range(1, coordinator.settings[CONF_MAX_POWER] + 1)
         }
         self._attr_preset_modes = list(self._power_presets)
+        self._fan_pairs = {}
+        if coordinator.settings[CONF_DUAL_FAN]:
+            self._attr_supported_features |= ClimateEntityFeature.FAN_MODE
+            self._fan_pairs = {
+                f"fans_{first}_{second}": (first, second)
+                for first in range(1, 5)
+                for second in range(1, 5)
+            }
+            self._attr_fan_modes = list(self._fan_pairs)
+
+    @property
+    def fan_mode(self):
+        """Represent both independent speeds in HA's single native fan selector."""
+        state = self.coordinator.data
+        mode = f"fans_{state.fan_1}_{state.fan_2}"
+        return mode if mode in self._fan_pairs else None
+
+    async def async_set_fan_mode(self, fan_mode):
+        if fan_mode not in self._fan_pairs:
+            raise ServiceValidationError("Unsupported fan combination")
+        first, second = self._fan_pairs[fan_mode]
+        await self.coordinator.async_set_fan_speeds(fan_1=first, fan_2=second)
 
     @property
     def preset_mode(self):

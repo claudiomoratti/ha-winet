@@ -14,12 +14,14 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .api import StoveState, WinetClient, WinetError
 from .const import (
     CONF_AIR_DIVISOR,
+    CONF_DUAL_FAN,
     CONF_HYDRO,
     CONF_INTERVAL,
     CONF_MAX_POWER,
     CONF_READ_ONLY,
     DEFAULTS,
     DOMAIN,
+    DUAL_FAN_PROFILE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,14 +51,62 @@ class WinetCoordinator(DataUpdateCoordinator[StoveState]):
         except WinetError as err:
             raise UpdateFailed(str(err)) from err
 
-    async def async_command(self, path: str, value: float | int) -> None:
-        """Validate first, send once, then read back; never assume final state."""
+    def _check_writes_allowed(self) -> None:
         if self.settings[CONF_READ_ONLY]:
             raise ServiceValidationError(
                 "WiNet is in read-only mode. Enable commands in integration options."
             )
         if not self.last_update_success:
             raise HomeAssistantError("WiNet is unavailable")
+
+    async def async_set_fan_speeds(self, *, fan_1=None, fan_2=None) -> None:
+        """Set one or both fans, with a fresh profile check and immediate readback."""
+        self._check_writes_allowed()
+        if not self.settings[CONF_DUAL_FAN]:
+            raise ServiceValidationError("P937 fan control is not enabled")
+        requested = {fan: speed for fan, speed in ((1, fan_1), (2, fan_2)) if speed is not None}
+        if not requested:
+            raise ServiceValidationError("A fan speed is required")
+        for speed in requested.values():
+            if (
+                isinstance(speed, bool)
+                or not isinstance(speed, (int, float))
+                or not math.isfinite(speed)
+                or not 1 <= speed <= 4
+                or speed != int(speed)
+            ):
+                raise ServiceValidationError("Fan speed must be an integer from 1 to 4")
+        try:
+            async with self._io_lock:
+                state = await self.client.read()
+                self.async_set_updated_data(state)
+                if state.fan_profile != DUAL_FAN_PROFILE or any(
+                    getattr(state, f"fan_{fan}") is None for fan in requested
+                ):
+                    raise ServiceValidationError(
+                        "Fan control requires WiNet profile 27436 and valid fan readings"
+                    )
+                changed = False
+                for fan, speed in requested.items():
+                    if getattr(state, f"fan_{fan}") != speed:
+                        await self.client.command_fan(fan, int(speed))
+                        changed = True
+                if changed:
+                    # Keep the pair and its readback serialized, bypassing debouncing.
+                    state = await self.client.read()
+                    self.async_set_updated_data(state)
+                if any(getattr(state, f"fan_{fan}") != speed for fan, speed in requested.items()):
+                    raise HomeAssistantError("WiNet did not confirm the requested fan speeds")
+        except WinetError as err:
+            # A pair is not atomic: a first command may have succeeded. Never retry.
+            await self.async_refresh()
+            raise HomeAssistantError(
+                "Fan command failed or its outcome is uncertain; check both fan speeds"
+            ) from err
+
+    async def async_command(self, path: str, value: float | int) -> None:
+        """Validate first, send once, then read back; never assume final state."""
+        self._check_writes_allowed()
         if (
             isinstance(value, bool)
             or not isinstance(value, (float, int))

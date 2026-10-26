@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0 — 2026-10-26
+
+- Supporto opzionale delle due ventole Piazzetta P937, livelli 1–4, con profilo
+  WiNet 27436 già configurato sul modulo.
+- Selettore nativo della coppia di velocità nel termostato, tradotto in italiano
+  e inglese, più due controlli number separati.
+- Lettura dei parametri logici 47/48 tramite AJAX, verifica del profilo prima di
+  scrivere e riscontro immediato condiviso fra tutte le entità.
+- Rispetto della sola lettura, blocco di valori o profili non supportati e nessun
+  tentativo automatico di ripetere una scrittura, anche in caso di esito parziale.
+- Profilo del modulo e modalità di protocollo non vengono modificati dall'integrazione.
+
 ## 0.1.1 — 2026-10-26
 
 - Potenza disponibile come preimpostazione dell'entità climate, nella stessa scheda
