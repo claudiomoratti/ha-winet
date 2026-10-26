@@ -1,12 +1,13 @@
 # WiNet Local for Home Assistant
 
 Integrazione custom per le **API locali WiNet Stove**, preparata per HACS.
-Versione iniziale **0.1.0**, sperimentale: test software su Home Assistant **2026.10.1**;
+Versione **0.1.1**, sperimentale: test software su Home Assistant **2026.10.1**;
 collaudo dei comandi su stufa reale ancora da effettuare.
 
 ## Entità native
 
-- **Climate**: temperatura aria, setpoint, modalità `heat` / `off`, accensione e spegnimento.
+- **Climate**: temperatura aria, setpoint, modalità `heat` / `off`, accensione e spegnimento,
+  preimpostazioni di potenza da 1 a 5 (fino a 9 sui modelli compatibili).
 - **Number**: potenza da 1 a 5, oppure fino a 9 se il modello lo supporta.
 - **Sensor**: stato, descrizione originale, temperatura aria, fumi, giri estrattore.
 - **Binary sensor**: allarme secondo la mappa stati convenzionale WiNet.
@@ -15,6 +16,28 @@ collaudo dei comandi su stufa reale ancora da effettuare.
 Un unico dispositivo, identificato dal MAC, raggruppa tutte le entità. Più moduli
 possono essere aggiunti senza collisioni. Interfaccia e opzioni in italiano e inglese.
 Nessuna dashboard o integrazione frontend aggiuntiva è necessaria.
+
+### Potenza nella scheda termostato
+
+La potenza è disponibile anche come preimpostazione dell'entità climate:
+**Potenza 1**, **Potenza 2**, …, fino al massimo configurato nell'integrazione.
+Per mostrarla nella stessa scheda di temperatura e accensione, aggiungere la funzione
+**Preimpostazioni climatizzatore** nell'editor della scheda termostato, oppure usare:
+
+```yaml
+type: thermostat
+entity: climate.nome_della_stufa
+features:
+  - type: climate-hvac-modes
+  - type: climate-preset-modes
+    style: dropdown
+```
+
+Sostituire l'entity ID con quello della propria stufa. Il selettore mostra il livello
+letto dal dispositivo e resta sincronizzato con l'entità number e con l'app WiNet.
+Selezionare una potenza modifica soltanto quel valore: non accende la stufa e non
+cambia la temperatura impostata. Le azioni standard usano `climate.set_preset_mode`
+con `preset_mode: power_1` … `power_5` (o `power_9` se configurato).
 
 ## Installazione con HACS
 

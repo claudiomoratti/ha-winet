@@ -87,6 +87,25 @@
       "alarm": {
         "name": "Alarm"
       }
+    },
+    "climate": {
+      "stove": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "power_1": "Power 1",
+              "power_2": "Power 2",
+              "power_3": "Power 3",
+              "power_4": "Power 4",
+              "power_5": "Power 5",
+              "power_6": "Power 6",
+              "power_7": "Power 7",
+              "power_8": "Power 8",
+              "power_9": "Power 9"
+            }
+          }
+        }
+      }
     }
   }
 }

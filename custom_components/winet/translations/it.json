@@ -87,6 +87,25 @@
       "alarm": {
         "name": "Allarme"
       }
+    },
+    "climate": {
+      "stove": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "power_1": "Potenza 1",
+              "power_2": "Potenza 2",
+              "power_3": "Potenza 3",
+              "power_4": "Potenza 4",
+              "power_5": "Potenza 5",
+              "power_6": "Potenza 6",
+              "power_7": "Potenza 7",
+              "power_8": "Potenza 8",
+              "power_9": "Potenza 9"
+            }
+          }
+        }
+      }
     }
   }
 }

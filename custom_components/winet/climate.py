@@ -4,7 +4,7 @@ from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.exceptions import ServiceValidationError
 
-from .const import CONF_AIR_DIVISOR
+from .const import CONF_AIR_DIVISOR, CONF_MAX_POWER
 from .entity import WinetEntity
 
 
@@ -15,6 +15,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class WinetClimate(WinetEntity, ClimateEntity):
     _attr_name = None
     _attr_icon = "mdi:fire"
+    _attr_translation_key = "stove"
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_min_temp = 5
     _attr_max_temp = 40
@@ -24,10 +25,33 @@ class WinetClimate(WinetEntity, ClimateEntity):
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.TURN_ON
         | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.PRESET_MODE
     )
 
     def __init__(self, coordinator):
         super().__init__(coordinator, "climate")
+        self._power_presets = {
+            f"power_{level}": level for level in range(1, coordinator.settings[CONF_MAX_POWER] + 1)
+        }
+        self._attr_preset_modes = list(self._power_presets)
+
+    @property
+    def preset_mode(self):
+        """Use the shared device snapshot, including changes made outside HA."""
+        return next(
+            (
+                preset
+                for preset, level in self._power_presets.items()
+                if level == self.coordinator.data.power
+            ),
+            None,
+        )
+
+    async def async_set_preset_mode(self, preset_mode):
+        """Set only combustion power; preserve temperature and on/off state."""
+        if preset_mode not in self._power_presets:
+            raise ServiceValidationError("Unsupported power preset")
+        await self.coordinator.async_command("power", self._power_presets[preset_mode])
 
     @property
     def current_temperature(self):
