@@ -59,7 +59,109 @@ async def test_read_only_services(hass, entry, api_mock):
             {"entity_id": entity_id(hass, "number", "power"), "value": 3},
             blocking=True,
         )
+    with pytest.raises(ServiceValidationError, match="read-only"):
+        await hass.services.async_call(
+            "climate",
+            "set_preset_mode",
+            {"entity_id": entity_id(hass, "climate", "climate"), "preset_mode": "power_3"},
+            blocking=True,
+        )
     assert api_mock.call_count == 2
+
+
+@pytest.mark.parametrize("max_power", [5, 9])
+async def test_power_presets_follow_config_and_device(hass, entry, api_mock, max_power):
+    hass.config_entries.async_update_entry(entry, options=entry.options | {"max_power": max_power})
+    coordinator = await setup(hass, entry)
+    climate_id = entity_id(hass, "climate", "climate")
+    assert hass.states.get(climate_id).attributes["preset_modes"] == [
+        f"power_{level}" for level in range(1, max_power + 1)
+    ]
+    for power in [1, max_power, None, 0, max_power + 1]:
+        coordinator.async_set_updated_data(StoveState.parse(GLOBAL | {"power": power}))
+        climate = hass.states.get(climate_id)
+        expected = f"power_{power}" if power is not None and 1 <= power <= max_power else None
+        assert climate.attributes.get("preset_mode") == expected
+        assert climate.state == "off"
+        assert climate.attributes["temperature"] == 19
+
+
+@pytest.mark.parametrize("max_power,level", [(5, 1), (5, 5), (9, 9)])
+async def test_set_power_preset_and_number_stay_synchronized(
+    hass, entry, api_mock, max_power, level
+):
+    hass.config_entries.async_update_entry(
+        entry, options=entry.options | {"read_only": False, "max_power": max_power}
+    )
+    coordinator = await setup(hass, entry)
+    climate_id = entity_id(hass, "climate", "climate")
+    power_id = entity_id(hass, "number", "power")
+    with (
+        patch.object(coordinator.client, "command", new_callable=AsyncMock) as command,
+        patch.object(
+            coordinator.client,
+            "read",
+            new=AsyncMock(return_value=StoveState.parse(GLOBAL | {"power": level})),
+        ),
+    ):
+        await hass.services.async_call(
+            "climate",
+            "set_preset_mode",
+            {"entity_id": climate_id, "preset_mode": f"power_{level}"},
+            blocking=True,
+        )
+        command.assert_awaited_once_with("power", level)
+    assert hass.states.get(power_id).state == f"{level}.0"
+    assert hass.states.get(climate_id).attributes["preset_mode"] == f"power_{level}"
+    assert hass.states.get(climate_id).state == "off"
+    assert hass.states.get(climate_id).attributes["temperature"] == 19
+    with (
+        patch.object(coordinator.client, "command", new_callable=AsyncMock) as command,
+        patch.object(
+            coordinator.client, "read", new=AsyncMock(return_value=StoveState.parse(GLOBAL))
+        ),
+    ):
+        await hass.services.async_call(
+            "number",
+            "set_value",
+            {"entity_id": power_id, "value": 5},
+            blocking=True,
+        )
+        command.assert_awaited_once_with("power", 5)
+    assert hass.states.get(climate_id).attributes["preset_mode"] == "power_5"
+
+
+@pytest.mark.parametrize("preset", ["power_0", "power_6", "power_9", "eco", "power_2.5"])
+async def test_invalid_power_preset_never_sends_command(hass, entry, api_mock, preset):
+    hass.config_entries.async_update_entry(entry, options=entry.options | {"read_only": False})
+    coordinator = await setup(hass, entry)
+    with patch.object(coordinator.client, "command", new_callable=AsyncMock) as command:
+        with pytest.raises(ServiceValidationError):
+            await hass.services.async_call(
+                "climate",
+                "set_preset_mode",
+                {"entity_id": entity_id(hass, "climate", "climate"), "preset_mode": preset},
+                blocking=True,
+            )
+        command.assert_not_awaited()
+
+
+async def test_power_preset_uses_readback_instead_of_requested_value(hass, entry, api_mock):
+    hass.config_entries.async_update_entry(entry, options=entry.options | {"read_only": False})
+    coordinator = await setup(hass, entry)
+    with patch.object(coordinator.client, "command", new_callable=AsyncMock) as command:
+        await hass.services.async_call(
+            "climate",
+            "set_preset_mode",
+            {"entity_id": entity_id(hass, "climate", "climate"), "preset_mode": "power_3"},
+            blocking=True,
+        )
+        command.assert_awaited_once_with("power", 3)
+    assert (
+        hass.states.get(entity_id(hass, "climate", "climate")).attributes["preset_mode"]
+        == "power_5"
+    )
+    assert hass.states.get(entity_id(hass, "number", "power")).state == "5.0"
 
 
 async def test_conversion_and_readback(hass, entry, api_mock):
