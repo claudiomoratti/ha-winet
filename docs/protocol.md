@@ -29,7 +29,8 @@ Dal pannello `management.js` sono stati ricostruiti:
 
 - Lettura: POST `/ajax/get-registers`, corpo `key=020&category=0`.
   La risposta comprende `custom` e `params`, con coppie `[47, velocità_1]` e
-  `[48, velocità_2]`.
+  `[48, velocità_2]`. Comprende inoltre `signal` (livello Wi-Fi 0–4) e `mode`
+  (gestione automatica: disabilitata, soglie, calendario o soglie nel calendario).
 - Scrittura: POST `/ajax/set-register`, corpo
   `key=002&memory=1&regId=47&value=3` per la prima ventola;
   `regId=48` per la seconda. Gli identificativi sono logici, non indirizzi di

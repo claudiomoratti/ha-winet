@@ -11,6 +11,8 @@ setpoint, potenza, accensione e spegnimento richiedono ancora un collaudo comple
   preimpostazioni di potenza da 1 a 5 (fino a 9 sui modelli compatibili).
 - **Number**: potenza da 1 a 5, oppure fino a 9 se il modello lo supporta.
 - **Sensor**: stato, descrizione originale, temperatura aria, fumi, giri estrattore.
+- **Diagnostica P937**: livello del segnale Wi-Fi, profilo WiNet e modalità della
+  gestione automatica interna, letti insieme alle ventole senza richieste aggiuntive.
 - **Binary sensor**: allarme secondo la mappa stati convenzionale WiNet.
 - **Idro opzionale**: temperatura acqua e setpoint acqua 40–80 °C.
 - **Due ventole P937 opzionali**: velocità indipendenti 1–4 e selettore della coppia

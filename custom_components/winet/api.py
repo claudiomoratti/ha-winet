@@ -69,15 +69,28 @@ class StoveState:
     fan_profile: int | None = None
     fan_1: int | None = None
     fan_2: int | None = None
+    wifi_signal: int | None = None
+    automation_mode: int | None = None
 
     def with_fans(self, data: dict[str, Any]) -> StoveState:
-        """Accept only the P937 profile and unambiguous levels 1–4."""
+        """Read safe WiNet diagnostics and verified P937 fan values."""
         profile = data.get("custom")
-        if type(profile) is not int or profile != DUAL_FAN_PROFILE:
-            return self
+        profile = profile if type(profile) is int else None
+        signal = data.get("signal")
+        signal = signal if type(signal) is int and 0 <= signal <= 4 else None
+        mode = data.get("mode")
+        mode = mode if type(mode) is int and 0 <= mode <= 3 else None
+        state = replace(
+            self,
+            fan_profile=profile,
+            wifi_signal=signal,
+            automation_mode=mode,
+        )
+        if profile != DUAL_FAN_PROFILE:
+            return state
         params = data.get("params")
         if not isinstance(params, list):
-            return replace(self, fan_profile=profile)
+            return state
         levels = {}
         duplicates = set()
         for item in params:
@@ -90,8 +103,7 @@ class StoveState:
                 duplicates.add(register)
             levels[register] = value if type(value) is int and 1 <= value <= 4 else None
         return replace(
-            self,
-            fan_profile=profile,
+            state,
             fan_1=None if 47 in duplicates else levels.get(47),
             fan_2=None if 48 in duplicates else levels.get(48),
         )

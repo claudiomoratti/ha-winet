@@ -89,6 +89,22 @@
       },
       "water": {
         "name": "Water temperature"
+      },
+      "wifi_signal": {
+        "name": "Wi-Fi signal level"
+      },
+      "fan_profile": {
+        "name": "WiNet profile"
+      },
+      "automation_mode": {
+        "name": "WiNet automatic management",
+        "state": {
+          "disabled": "Disabled",
+          "temperature_thresholds": "Temperature thresholds",
+          "weekly_schedule": "Weekly schedule",
+          "thresholds_in_schedule": "Temperature thresholds in schedule",
+          "unrecognized": "Unrecognized"
+        }
       }
     },
     "binary_sensor": {

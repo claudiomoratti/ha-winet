@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-10-27
+
+- Nuove entità diagnostiche P937 per livello del segnale Wi-Fi, profilo WiNet e
+  modalità della gestione automatica interna.
+- Validazione stretta dei nuovi valori: dati assenti, fuori intervallo o con tipo
+  errato restano sconosciuti e non compromettono il termostato principale.
+- Nessuna richiesta di rete aggiuntiva: le diagnostiche riusano la lettura AJAX
+  già effettuata quando il supporto alle due ventole è abilitato.
+
 ## 0.2.0 — 2026-10-26
 
 - Supporto opzionale delle due ventole Piazzetta P937, livelli 1–4, con profilo

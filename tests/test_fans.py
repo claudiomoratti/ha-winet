@@ -13,7 +13,13 @@ from custom_components.winet.api import StoveState, WinetClient, WinetError
 from .conftest import GLOBAL, HOST
 from .test_integration import entity_id, setup
 
-REGISTERS = {"custom": 27436, "params": [[47, 3], [48, 2]], "name": "not-for-diagnostics"}
+REGISTERS = {
+    "custom": 27436,
+    "params": [[47, 3], [48, 2]],
+    "signal": 4,
+    "mode": 0,
+    "name": "not-for-diagnostics",
+}
 
 
 def fan_state(first=3, second=2):
@@ -104,6 +110,9 @@ async def test_entities_track_remote_and_unknown_values(hass, fan_entry):
     assert climate.attributes["supported_features"] & ClimateEntityFeature.FAN_MODE
     assert len(climate.attributes["fan_modes"]) == 16
     assert climate.attributes["fan_mode"] == "fans_3_2"
+    assert hass.states.get(entity_id(hass, "sensor", "wifi_signal")).state == "4"
+    assert hass.states.get(entity_id(hass, "sensor", "fan_profile")).state == "27436"
+    assert hass.states.get(entity_id(hass, "sensor", "automation_mode")).state == "disabled"
     for fan, speed in [(1, 3), (2, 2)]:
         state = hass.states.get(entity_id(hass, "number", f"fan_{fan}"))
         assert state.state == str(speed)

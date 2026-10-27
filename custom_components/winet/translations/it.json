@@ -89,6 +89,22 @@
       },
       "water": {
         "name": "Temperatura acqua"
+      },
+      "wifi_signal": {
+        "name": "Livello segnale Wi-Fi"
+      },
+      "fan_profile": {
+        "name": "Profilo WiNet"
+      },
+      "automation_mode": {
+        "name": "Gestione automatica WiNet",
+        "state": {
+          "disabled": "Disabilitata",
+          "temperature_thresholds": "Soglie di temperatura",
+          "weekly_schedule": "Programmazione settimanale",
+          "thresholds_in_schedule": "Soglie di temperatura nelle fasce orarie",
+          "unrecognized": "Non riconosciuta"
+        }
       }
     },
     "binary_sensor": {

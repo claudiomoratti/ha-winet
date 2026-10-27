@@ -20,3 +20,9 @@ DEFAULTS = {
     CONF_INTERVAL: 15,
 }
 STATUS_NAMES = {0: "off", 1: "on", 2: "final_cleaning", 3: "alarm", 4: "unmanaged"}
+AUTOMATION_MODE_NAMES = {
+    0: "disabled",
+    1: "temperature_thresholds",
+    2: "weekly_schedule",
+    3: "thresholds_in_schedule",
+}
