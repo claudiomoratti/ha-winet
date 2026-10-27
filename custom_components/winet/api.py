@@ -71,9 +71,17 @@ class StoveState:
     fan_2: int | None = None
     wifi_signal: int | None = None
     automation_mode: int | None = None
+    operating_phase: int | None = None
+    alarm_code: int | None = None
+    wifi_rssi: int | None = None
+    wifi_status: int | None = None
+    cloud_status: int | None = None
+    last_disconnect_reason: int | None = None
+    last_cloud_error: int | None = None
+    firmware_version: str | None = None
 
-    def with_fans(self, data: dict[str, Any]) -> StoveState:
-        """Read safe WiNet diagnostics and verified P937 fan values."""
+    def with_registers(self, data: dict[str, Any]) -> StoveState:
+        """Read safe WiNet diagnostics and verified P937 registers."""
         profile = data.get("custom")
         profile = profile if type(profile) is int else None
         signal = data.get("signal")
@@ -91,21 +99,63 @@ class StoveState:
         params = data.get("params")
         if not isinstance(params, list):
             return state
-        levels = {}
+        values = {}
         duplicates = set()
         for item in params:
             if not isinstance(item, list) or len(item) != 2:
                 continue
             register, value = item
-            if type(register) is not int or register not in (47, 48):
+            if type(register) is not int or register not in (2, 3, 47, 48):
                 continue
-            if register in levels:
+            if register in values:
                 duplicates.add(register)
-            levels[register] = value if type(value) is int and 1 <= value <= 4 else None
+            values[register] = value if type(value) is int else None
+
+        phase = values.get(2)
+        phase = phase if phase is not None and 0 <= phase <= 255 else None
+        alarm = values.get(3)
+        alarm = alarm if alarm is not None and 0 <= alarm <= 255 else None
+
+        def fan_value(register: int) -> int | None:
+            value = values.get(register)
+            return value if value is not None and 1 <= value <= 4 else None
+
         return replace(
             state,
-            fan_1=None if 47 in duplicates else levels.get(47),
-            fan_2=None if 48 in duplicates else levels.get(48),
+            operating_phase=None if 2 in duplicates else phase,
+            alarm_code=None if 3 in duplicates else alarm,
+            fan_1=None if 47 in duplicates else fan_value(47),
+            fan_2=None if 48 in duplicates else fan_value(48),
+        )
+
+    def with_module_status(self, data: dict[str, Any]) -> StoveState:
+        """Read allowlisted health fields from the WiNet module status page."""
+
+        def integer(key: str, allowed: set[int] | None = None) -> int | None:
+            value = data.get(key)
+            if type(value) is not int or (allowed is not None and value not in allowed):
+                return None
+            return value
+
+        firmware = data.get("fwVer")
+        if not isinstance(firmware, str) or not firmware or len(firmware) > 40:
+            firmware = None
+        module_signal = integer("signal", set(range(5)))
+        return replace(
+            self,
+            wifi_signal=module_signal if module_signal is not None else self.wifi_signal,
+            wifi_rssi=integer("rssi", set(range(-127, 1))),
+            wifi_status=integer("status"),
+            cloud_status=integer("client"),
+            last_disconnect_reason=integer(
+                "lastDisconnectReason",
+                {*range(12), *range(13, 25), *range(200, 205)},
+            ),
+            last_cloud_error=integer(
+                "lastCloudError",
+                {0, -1, -3, -4, -5, -7, -8, -9, -10, -11, -12, -14, -15, -28, -61},
+            ),
+            firmware_version=firmware,
         )
 
     @classmethod
@@ -196,8 +246,15 @@ class WinetClient:
             registers = await self._post("get-registers", {"key": "020", "category": 0})
         except WinetError:
             # An auxiliary endpoint failure must not hide the main thermostat.
+            pass
+        else:
+            state = state.with_registers(registers)
+        try:
+            module_status = await self._post("get-status", {})
+        except WinetError:
+            # Network diagnostics are optional and must not hide stove readings.
             return state
-        return state.with_fans(registers)
+        return state.with_module_status(module_status)
 
     async def command_fan(self, fan: int, speed: int) -> None:
         """Write only the two verified logical registers; never change profiles."""

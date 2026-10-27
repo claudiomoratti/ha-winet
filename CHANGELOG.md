@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 — 2026-10-27
+
+- Nuovo sensore P937 della fase operativa dettagliata, con codici grezzi conservati:
+  spenta, attesa fiamma, accensione, lavoro, standby, pulizie e allarmi.
+- Nuove diagnostiche del modulo: RSSI in dBm, stato Wi-Fi, stato cloud, ultima causa
+  di disconnessione e ultimo errore cloud; firmware mostrato nelle informazioni dispositivo.
+- Codice allarme grezzo disponibile come diagnostica, senza inventare descrizioni non
+  documentate dal produttore.
+- Le letture ausiliarie restano isolate: un errore della pagina diagnostica non rende
+  indisponibile il termostato né provoca scritture o tentativi automatici.
+- Confermata sul P937 reale la transizione `2` (attesa fiamma) → `4` (lavoro); le
+  velocità 47/48 sono setpoint e non feedback di rotazione.
+
 ## 0.3.0 — 2026-10-27
 
 - Nuove entità diagnostiche P937 per livello del segnale Wi-Fi, profilo WiNet e

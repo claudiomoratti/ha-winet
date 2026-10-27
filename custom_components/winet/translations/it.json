@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "WiNet Local",
-        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Il supporto degli stati diversi da OFF è ancora da verificare su hardware. Le ventole richiedono il profilo 27436 già attivo sul modulo; l’integrazione non lo modifica.",
+        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Fasi dettagliate e ventole P937 richiedono il profilo 27436 già attivo sul modulo; l’integrazione non lo modifica.",
         "data": {
           "host": "Indirizzo IP o hostname",
           "air_divisor": "Divisore temperatura aria (1 = °C, 2 = mezzi gradi)",
@@ -36,7 +36,7 @@
     "step": {
       "init": {
         "title": "WiNet Local",
-        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Il supporto degli stati diversi da OFF è ancora da verificare su hardware. Le ventole richiedono il profilo 27436 già attivo sul modulo; l’integrazione non lo modifica.",
+        "description": "Confronta le temperature con il display della stufa. Il profilo iniziale usa mezzi gradi. Mantieni la sola lettura per il primo test. Fasi dettagliate e ventole P937 richiedono il profilo 27436 già attivo sul modulo; l’integrazione non lo modifica.",
         "data": {
           "air_divisor": "Divisore temperatura aria (1 = °C, 2 = mezzi gradi)",
           "max_power": "Potenza massima",
@@ -105,6 +105,56 @@
           "thresholds_in_schedule": "Soglie di temperatura nelle fasce orarie",
           "unrecognized": "Non riconosciuta"
         }
+      },
+      "operating_phase": {
+        "name": "Fase operativa",
+        "state": {
+          "off": "Spenta",
+          "waiting_flame": "Attesa fiamma",
+          "ignition": "Accensione",
+          "work": "Lavoro",
+          "standby": "Standby",
+          "final_cleaning": "Pulizia finale",
+          "brazier_cleaning": "Pulizia braciere",
+          "alarm": "Allarme",
+          "alarm_memory": "Memoria allarme",
+          "unrecognized": "Non riconosciuta"
+        }
+      },
+      "alarm_code": {
+        "name": "Codice allarme grezzo"
+      },
+      "wifi_rssi": {
+        "name": "Potenza segnale Wi-Fi"
+      },
+      "wifi_status": {
+        "name": "Connessione Wi-Fi",
+        "state": {
+          "idle": "Inattiva",
+          "connecting": "Connessione in corso",
+          "wrong_password": "Password errata",
+          "access_point_not_found": "Access point non trovato",
+          "connection_failed": "Connessione fallita",
+          "connected": "Connessa",
+          "not_in_station_mode": "Modalità stazione non attiva",
+          "unrecognized": "Non riconosciuta"
+        }
+      },
+      "cloud_status": {
+        "name": "Connessione cloud WiNet",
+        "state": {
+          "idle": "Inattiva",
+          "paused": "In pausa",
+          "connected": "Connessa",
+          "disconnected": "Disconnessa",
+          "unrecognized": "Non riconosciuta"
+        }
+      },
+      "last_disconnect_reason": {
+        "name": "Ultima causa disconnessione Wi-Fi"
+      },
+      "last_cloud_error": {
+        "name": "Ultimo errore cloud"
       }
     },
     "binary_sensor": {

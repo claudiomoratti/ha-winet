@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, call, patch
 import pytest
 from homeassistant.components.climate import ClimateEntityFeature
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from custom_components.winet.api import StoveState, WinetClient, WinetError
@@ -15,16 +16,29 @@ from .test_integration import entity_id, setup
 
 REGISTERS = {
     "custom": 27436,
-    "params": [[47, 3], [48, 2]],
+    "params": [[2, 4], [3, 0], [47, 3], [48, 2]],
     "signal": 4,
     "mode": 0,
     "name": "not-for-diagnostics",
 }
+MODULE_STATUS = {
+    "status": 5,
+    "client": 2,
+    "signal": 4,
+    "rssi": -51,
+    "lastDisconnectReason": 0,
+    "lastCloudError": 0,
+    "fwVer": "0.79",
+    "network": "not-for-diagnostics",
+    "currentIp": "not-for-diagnostics",
+}
 
 
 def fan_state(first=3, second=2):
-    return StoveState.parse(GLOBAL).with_fans(
-        {"custom": 27436, "params": [[47, first], [48, second]]}
+    return (
+        StoveState.parse(GLOBAL)
+        .with_registers({"custom": 27436, "params": [[2, 4], [3, 0], [47, first], [48, second]]})
+        .with_module_status(MODULE_STATUS)
     )
 
 
@@ -34,6 +48,7 @@ async def fan_entry(hass, entry, api_mock):
         entry, options=entry.options | {"dual_fan": True, "read_only": False}
     )
     api_mock.post(f"http://{HOST}/ajax/get-registers", json=REGISTERS)
+    api_mock.post(f"http://{HOST}/ajax/get-status", json=MODULE_STATUS)
     await setup(hass, entry)
     return entry
 
@@ -61,7 +76,7 @@ async def test_disabled_by_default(hass, entry, api_mock):
     ],
 )
 def test_invalid_or_unsupported_registers_stay_unknown(payload):
-    state = StoveState.parse(GLOBAL).with_fans(payload)
+    state = StoveState.parse(GLOBAL).with_registers(payload)
     assert state.fan_1 is None
     assert state.fan_2 is None
     assert state.power == GLOBAL["power"]
@@ -69,11 +84,14 @@ def test_invalid_or_unsupported_registers_stay_unknown(payload):
 
 async def test_exact_read_and_write_format(hass, api_mock):
     api_mock.post(f"http://{HOST}/ajax/get-registers", json=REGISTERS)
+    api_mock.post(f"http://{HOST}/ajax/get-status", json=MODULE_STATUS)
     api_mock.post(f"http://{HOST}/ajax/set-register", json={"result": True})
     client = WinetClient(async_get_clientsession(hass), HOST, dual_fan=True)
     state = await client.read()
     assert (state.fan_1, state.fan_2) == (3, 2)
-    assert api_mock.mock_calls[-1][2] == "key=020&category=0"
+    assert api_mock.mock_calls[-2][2] == "key=020&category=0"
+    assert str(api_mock.mock_calls[-1][1]) == f"http://{HOST}/ajax/get-status"
+    assert api_mock.mock_calls[-1][2] is None
     await client.command_fan(1, 4)
     assert api_mock.mock_calls[-1][2] == "key=002&memory=1&regId=47&value=4"
     await client.command_fan(2, 1)
@@ -92,6 +110,7 @@ async def test_rejected_write(hass, aioclient_mock, response):
 @pytest.mark.parametrize("response", ["[]", "not json"])
 async def test_bad_auxiliary_response_preserves_thermostat(hass, api_mock, response):
     api_mock.post(f"http://{HOST}/ajax/get-registers", text=response)
+    api_mock.post(f"http://{HOST}/ajax/get-status", exc=TimeoutError)
     state = await WinetClient(async_get_clientsession(hass), HOST, dual_fan=True).read()
     assert state == StoveState.parse(GLOBAL)
 
@@ -111,6 +130,17 @@ async def test_entities_track_remote_and_unknown_values(hass, fan_entry):
     assert len(climate.attributes["fan_modes"]) == 16
     assert climate.attributes["fan_mode"] == "fans_3_2"
     assert hass.states.get(entity_id(hass, "sensor", "wifi_signal")).state == "4"
+    assert hass.states.get(entity_id(hass, "sensor", "wifi_rssi")).state == "-51"
+    assert hass.states.get(entity_id(hass, "sensor", "operating_phase")).state == "work"
+    assert hass.states.get(entity_id(hass, "sensor", "alarm_code")).state == "0"
+    assert hass.states.get(entity_id(hass, "sensor", "wifi_status")).state == "connected"
+    assert hass.states.get(entity_id(hass, "sensor", "cloud_status")).state == "connected"
+    assert hass.states.get(entity_id(hass, "sensor", "last_disconnect_reason")).state == "0"
+    assert hass.states.get(entity_id(hass, "sensor", "last_cloud_error")).state == "0"
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        ("winet", fan_entry.unique_id), fan_entry.entry_id
+    )
+    assert device.sw_version == "0.79"
     assert hass.states.get(entity_id(hass, "sensor", "fan_profile")).state == "27436"
     assert hass.states.get(entity_id(hass, "sensor", "automation_mode")).state == "disabled"
     for fan, speed in [(1, 3), (2, 2)]:
@@ -253,12 +283,51 @@ async def test_auxiliary_timeout_keeps_main_climate_available(hass, fan_entry, a
     api_mock.clear_requests()
     api_mock.get(f"http://{HOST}/api/global", json=GLOBAL)
     api_mock.post(f"http://{HOST}/ajax/get-registers", exc=TimeoutError)
+    api_mock.post(f"http://{HOST}/ajax/get-status", json=MODULE_STATUS)
     coordinator = fan_entry.runtime_data
     await coordinator.async_refresh()
     assert coordinator.last_update_success
     assert hass.states.get(entity_id(hass, "climate", "climate")).state == "off"
     assert hass.states.get(entity_id(hass, "number", "fan_1")).state == "unavailable"
     assert hass.states.get(entity_id(hass, "number", "fan_2")).state == "unavailable"
+
+
+async def test_module_status_timeout_preserves_registers(hass, fan_entry, api_mock):
+    api_mock.clear_requests()
+    api_mock.get(f"http://{HOST}/api/global", json=GLOBAL)
+    api_mock.post(f"http://{HOST}/ajax/get-registers", json=REGISTERS)
+    api_mock.post(f"http://{HOST}/ajax/get-status", exc=TimeoutError)
+    coordinator = fan_entry.runtime_data
+    await coordinator.async_refresh()
+    assert coordinator.last_update_success
+    assert coordinator.data.fan_1 == 3
+    assert coordinator.data.operating_phase == 4
+    assert coordinator.data.wifi_rssi is None
+
+
+def test_module_status_validation_and_allowlist():
+    state = (
+        StoveState.parse(GLOBAL)
+        .with_registers(REGISTERS)
+        .with_module_status(
+            {
+                "status": 999,
+                "client": "2",
+                "signal": 9,
+                "rssi": -200,
+                "lastDisconnectReason": 12,
+                "lastCloudError": -2,
+                "fwVer": "",
+            }
+        )
+    )
+    assert state.wifi_status == 999
+    assert state.cloud_status is None
+    assert state.wifi_signal == 4
+    assert state.wifi_rssi is None
+    assert state.last_disconnect_reason is None
+    assert state.last_cloud_error is None
+    assert state.firmware_version is None
 
 
 async def test_unchanged_pair_does_not_write(hass, fan_entry):

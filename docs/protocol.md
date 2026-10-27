@@ -22,7 +22,7 @@ aria e setpoint coerenti con la codifica in mezzi gradi, acqua e RPM nulli. Ques
 osservazione non certifica il funzionamento in combustione o le scritture.
 Non si includono qui indirizzi, MAC, SSID o risposte identificative private.
 
-## Piazzetta P937: ventole, verifica del 26 ottobre 2026
+## Piazzetta P937: ventole e diagnostica, verifiche del 26–27 ottobre 2026
 
 Firmware WiNet 0.79, profilo `custom=27436`, due velocità indipendenti 1–4.
 Dal pannello `management.js` sono stati ricostruiti:
@@ -31,6 +31,15 @@ Dal pannello `management.js` sono stati ricostruiti:
   La risposta comprende `custom` e `params`, con coppie `[47, velocità_1]` e
   `[48, velocità_2]`. Comprende inoltre `signal` (livello Wi-Fi 0–4) e `mode`
   (gestione automatica: disabilitata, soglie, calendario o soglie nel calendario).
+- Sul profilo 27436 il registro 2 è la fase operativa dettagliata. Sono stati osservati
+  naturalmente `0` a stufa spenta, `2` durante l'attesa fiamma e `4` in lavoro. La mappa
+  completa 0–9 coincide con quella pubblicata dalle API cloud WiNet; i codici non noti
+  restano esplicitamente non riconosciuti.
+- Il registro 3 viene esposto solo come codice allarme grezzo. È rimasto `0` per tutta
+  l'accensione osservata; non viene associato a descrizioni non documentate.
+- POST `/ajax/get-status` espone diagnostiche del modulo: stato Wi-Fi e cloud, RSSI,
+  ultime cause di errore e firmware. La pagina ufficiale lo interroga ogni secondo;
+  l'integrazione lo legge al normale intervallo di polling configurato.
 - Scrittura: POST `/ajax/set-register`, corpo
   `key=002&memory=1&regId=47&value=3` per la prima ventola;
   `regId=48` per la seconda. Gli identificativi sono logici, non indirizzi di
@@ -43,6 +52,11 @@ prima ventola da telecomando sono state osservate in lettura. Un comando HTTP al
 seconda ventola da 4 a 2 è stato accettato, riletto e confermato sul telecomando.
 La scrittura della prima usa lo stesso meccanismo ma resta da verificare fisicamente.
 Questi riscontri non certificano ogni firmware, livello o fase della stufa.
+
+Durante l'accensione osservata il passaggio a lavoro è avvenuto prima dell'avvio fisico
+delle ventole ambiente. Le ventole sono partite con fumi a circa 86 °C, mentre 47/48
+erano già impostati a 4/3: sono quindi setpoint, non sensori di rotazione. Non viene
+creata alcuna entità “ventole in funzione” stimata dalla temperatura.
 
 Il profilo 27437 leggeva diversamente la seconda ventola; il 27419 restituiva anche
 setpoint e potenza incoerenti. Nessuno dei due è supportato. I parametri 47/48 hanno

@@ -1,7 +1,7 @@
 # WiNet Local for Home Assistant
 
 Integrazione custom per le **API locali WiNet Stove**, preparata per HACS.
-Versione **0.2.0**, sperimentale: test software su Home Assistant **2026.10.1**.
+Versione **0.4.0**, sperimentale: test software su Home Assistant **2026.10.1**.
 Ventole collaudate su Piazzetta P937 con WiNet 0.79 e profilo 27436;
 setpoint, potenza, accensione e spegnimento richiedono ancora un collaudo completo.
 
@@ -11,8 +11,8 @@ setpoint, potenza, accensione e spegnimento richiedono ancora un collaudo comple
   preimpostazioni di potenza da 1 a 5 (fino a 9 sui modelli compatibili).
 - **Number**: potenza da 1 a 5, oppure fino a 9 se il modello lo supporta.
 - **Sensor**: stato, descrizione originale, temperatura aria, fumi, giri estrattore.
-- **Diagnostica P937**: livello del segnale Wi-Fi, profilo WiNet e modalità della
-  gestione automatica interna, letti insieme alle ventole senza richieste aggiuntive.
+- **Diagnostica P937**: fase operativa dettagliata, codice allarme grezzo, RSSI,
+  stato Wi-Fi/cloud, ultime cause di errore, firmware, profilo e gestione automatica.
 - **Binary sensor**: allarme secondo la mappa stati convenzionale WiNet.
 - **Idro opzionale**: temperatura acqua e setpoint acqua 40–80 °C.
 - **Due ventole P937 opzionali**: velocità indipendenti 1–4 e selettore della coppia
@@ -104,7 +104,7 @@ e riavviare Home Assistant. Non copiare `tests`, `docs` o file di sviluppo in `/
 | Idro | no | Crea sensore e setpoint acqua |
 | Due ventole P937 | no | Controlli 1–4 per entrambe le ventole, solo con profilo 27436 |
 | Sola lettura | sì | Blocca tutte le scritture, incluse le azioni HA |
-| Intervallo | 15 s | Polling condiviso, configurabile 10–300 s; con ventole attive aggiunge una lettura dei registri |
+| Intervallo | 15 s | Polling condiviso, configurabile 10–300 s; il profilo P937 aggiunge registri e diagnostica modulo |
 
 Le opzioni sono modificabili dall'integrazione; vengono applicate con un reload.
 **Riconfigura** cambia l'indirizzo verificando che il MAC corrisponda allo stesso dispositivo.
@@ -129,8 +129,8 @@ scrittura danno un errore esplicito finché questa opzione è attiva.
 - Timeout, HTTP non validi e risposte malformate rendono il dispositivo indisponibile.
 - Valori `null` rimangono sconosciuti, senza convertirli in zero. I fumi a 0 °C sono
   conservati così come riportati: non costituiscono una misura validata del sensore.
-- Un errore del solo endpoint delle ventole rende sconosciuta la coppia e indisponibili
-  i controlli number interessati; il termostato mantiene le letture principali.
+- Un errore degli endpoint ausiliari rende sconosciuti solo ventole o diagnostiche;
+  il termostato mantiene le letture principali.
 - I comandi sono serializzati, non vengono ritentati automaticamente e sono seguiti
   da una lettura. `result=true` significa accettazione, non completamento del ciclo.
 - Un timeout di scrittura ha esito incerto: verificare lo stato prima di riprovare.
@@ -158,6 +158,12 @@ immediatamente ferme. Il sensore di stato mantiene visibile la fase reale.
 `hvac_action` è deliberatamente assente: con i dati disponibili non si distingue
 in modo universale accensione, combustione, modulazione e standby. Non si deducono
 queste fasi da temperature, RPM o parole nella descrizione.
+
+Sul profilo P937 27436 è disponibile anche **Fase operativa**, separata dallo stato
+generico sopra: codici WiNet 0–9 per spenta, attesa fiamma, accensione, lavoro,
+standby, pulizie e allarmi. Il codice grezzo resta visibile come attributo. Le velocità
+ventola sono setpoint e non provano che i motori stiano girando; non viene quindi
+generato un sensore di rotazione stimato.
 
 L'integrazione lascia la regolazione alla centralina della stufa. Non implementa
 un termostato esterno con cicli accendi/spegni o una programmazione interna.

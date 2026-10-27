@@ -21,5 +21,6 @@ class WinetEntity(CoordinatorEntity[WinetCoordinator]):
             name="WiNet Stove",
             manufacturer="WiNet",
             model=coordinator.identity["model"],
+            sw_version=coordinator.data.firmware_version,
             configuration_url=f"http://{coordinator.client.host}",
         )

@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "WiNet Local",
-        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Non-OFF state mappings still require hardware validation. Fans require profile 27436 already active on the module; the integration does not change it.",
+        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Detailed P937 phases and fans require profile 27436 already active on the module; the integration does not change it.",
         "data": {
           "host": "IP address or hostname",
           "air_divisor": "Air temperature divisor (1 = °C, 2 = half-degrees)",
@@ -36,7 +36,7 @@
     "step": {
       "init": {
         "title": "WiNet Local",
-        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Non-OFF state mappings still require hardware validation. Fans require profile 27436 already active on the module; the integration does not change it.",
+        "description": "Compare temperatures with the stove display. The initial profile uses half-degrees. Keep read-only enabled for the first test. Detailed P937 phases and fans require profile 27436 already active on the module; the integration does not change it.",
         "data": {
           "air_divisor": "Air temperature divisor (1 = °C, 2 = half-degrees)",
           "max_power": "Maximum power level",
@@ -105,6 +105,56 @@
           "thresholds_in_schedule": "Temperature thresholds in schedule",
           "unrecognized": "Unrecognized"
         }
+      },
+      "operating_phase": {
+        "name": "Operating phase",
+        "state": {
+          "off": "Off",
+          "waiting_flame": "Waiting for flame",
+          "ignition": "Ignition",
+          "work": "Work",
+          "standby": "Standby",
+          "final_cleaning": "Final cleaning",
+          "brazier_cleaning": "Brazier cleaning",
+          "alarm": "Alarm",
+          "alarm_memory": "Alarm memory",
+          "unrecognized": "Unrecognized"
+        }
+      },
+      "alarm_code": {
+        "name": "Raw alarm code"
+      },
+      "wifi_rssi": {
+        "name": "Wi-Fi signal strength"
+      },
+      "wifi_status": {
+        "name": "Wi-Fi connection",
+        "state": {
+          "idle": "Idle",
+          "connecting": "Connecting",
+          "wrong_password": "Wrong password",
+          "access_point_not_found": "Access point not found",
+          "connection_failed": "Connection failed",
+          "connected": "Connected",
+          "not_in_station_mode": "Not in station mode",
+          "unrecognized": "Unrecognized"
+        }
+      },
+      "cloud_status": {
+        "name": "WiNet cloud connection",
+        "state": {
+          "idle": "Idle",
+          "paused": "Paused",
+          "connected": "Connected",
+          "disconnected": "Disconnected",
+          "unrecognized": "Unrecognized"
+        }
+      },
+      "last_disconnect_reason": {
+        "name": "Last Wi-Fi disconnection reason"
+      },
+      "last_cloud_error": {
+        "name": "Last cloud error"
       }
     },
     "binary_sensor": {
